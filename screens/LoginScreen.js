@@ -1,16 +1,33 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native'; 
+import { LoginAPI, validateEmail } from '../services/loginService'; // función de login y validación de email
 
 const LoginScreen = () => {
   const navigation = useNavigation(); 
-
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [emailError, setEmailError] = useState('');
 
-  const handleLogin = () => {
-    // Lógica para iniciar sesión
-    navigation.navigate('AppointmentScreen');
+  const handleLogin = async () => {
+    if (!validateEmail(email)) {
+      setEmailError("Favor de ingresar un email válido");
+      return;
+    } else {
+      setEmailError(""); // Limpia el error de email si la validación pasa
+    }
+    try {
+      const decodedToken = await LoginAPI(email, password);
+      if (decodedToken) {
+        // Maneja el token decodificado, guarda en el estado global o almacenamiento seguro
+        navigation.navigate('AppointmentScreen');
+      } else {
+        Alert.alert('Error', 'Error en el inicio de sesión. Verifique sus credenciales.');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Error en el inicio de sesión. Verifique sus credenciales.');
+      console.error('Error logging in:', error);
+    }
   };
 
   const handleRegister = () => {
@@ -21,11 +38,12 @@ const LoginScreen = () => {
     <View style={styles.container}>
       <Text style={styles.title}>Fast Booking</Text>
       <Text style={styles.label}>Correo</Text>
+      {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
       <TextInput
         style={styles.input}
         placeholder="Ingresa tu correo"
         value={email}
-        onChangeText={setEmail}
+        onChangeText={(text) => setEmail(text)}
       />
       <Text style={styles.label}>Contraseña</Text>
       <TextInput
@@ -37,17 +55,17 @@ const LoginScreen = () => {
       />
       <TouchableOpacity style={styles.button} onPress={handleLogin}>
         <Text style={styles.buttonText}>Iniciar Sesión</Text>
-     </TouchableOpacity>
-     <TouchableOpacity onPress={handleRegister}>
-  <Text style={styles.forgPassword}>Regístrate</Text>
-  </TouchableOpacity>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={handleRegister}>
+        <Text style={styles.forgPassword}>Regístrate</Text>
+      </TouchableOpacity>
       <View style={styles.separator}>
         <View style={styles.line} />
         <Text style={styles.orText}>o</Text>
         <View style={styles.line} />
       </View>
       <TouchableOpacity style={styles.facebookButton}>
-        <Text style={styles.facebookButtonText}>Iniciar sesión con feisbuk</Text>
+        <Text style={styles.facebookButtonText}>Iniciar sesión con Facebook</Text>
       </TouchableOpacity>
     </View>
   );
@@ -91,11 +109,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  forgotPassword: {
-    color: '#007AFF',
-    fontSize: 16,
-    marginBottom: 20,
-  },
   forgPassword: {
     color: '#007AFF',
     fontSize: 16,
@@ -115,7 +128,7 @@ const styles = StyleSheet.create({
   orText: {
     fontSize: 16,
     fontWeight: 'bold',
-    marginHorizontal:10,
+    marginHorizontal: 10,
   },
   facebookButton: {
     backgroundColor: '#4267B2',
@@ -128,6 +141,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  errorText: {
+    color: '#bc2c46',
+    marginBottom: 10,
+  }
 });
 
 export default LoginScreen;
