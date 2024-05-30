@@ -1,77 +1,40 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React from 'react';
+import { StyleSheet } from 'react-native';
+import { Agenda } from 'react-native-calendars';
 
 const CalendarScreen = () => {
-  const navigation = useNavigation();
-
-  const [selectedDate, setSelectedDate] = useState(null); 
-
-  
-  const handleDateSelect = (date) => {
-    setSelectedDate(date);
-    // lógica para realizar acciones específicas cuando se selecciona una fecha
+  // Definir calendarTheme como un objeto
+  const calendarTheme = {
+    // Definir las propiedades de estilo del tema del calendario
+    // Puedes ajustar estos estilos según tus preferencias
+    'stylesheet.calendar.header': {
+      week: {
+        marginTop: 5,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingHorizontal: 10,
+      },
+    },
+    // Más propiedades de estilo aquí...
   };
-
- 
-  const renderDays = () => {
-    
-    const days = [];
-
-    for (let i = 1; i <= 31; i++) {
-      days.push(
-        <TouchableOpacity
-          key={i}
-          style={[styles.day, selectedDate === i ? styles.selectedDay : null]}
-          onPress={() => handleDateSelect(i)}
-        >
-          <Text style={styles.dayText}>{i}</Text>
-        </TouchableOpacity>
-      );
-    }
-
-    return days;
-  };
-
   return (
-    <View style={styles.container}>
-      <View style={styles.calendar}>
-        {renderDays()}
-      </View>
-      {/* Otras partes de tu interfaz de usuario, como la barra de navegación o los botones de acción */}
-    </View>
+    <Agenda
+      // Otras props del componente Agenda...
+      theme={{
+        // Pasar el objeto calendarTheme al tema del componente Agenda
+        calendarTheme,
+        agendaDayTextColor: 'yellow',
+        agendaDayNumColor: 'green',
+        agendaTodayColor: 'red',
+        agendaKnobColor: 'blue'
+      }}
+      // Otras props del componente Agenda...
+    />
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  calendar: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    marginTop: 20,
-  },
-  day: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    margin: 5,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#ccc',
-  },
-  selectedDay: {
-    backgroundColor: '#1B4965',
-  },
-  dayText: {
-    color: '#1B4965',
-    fontSize: 16,
-  },
+  // Estilos de tu componente
 });
 
-export default CalendarScreen;
+export default CalendarScreen;
