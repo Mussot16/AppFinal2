@@ -1,3 +1,4 @@
+// loginService.js
 import jwtDecode from 'jwt-decode';
 
 export const LoginAPI = async (email, password) => {
@@ -18,13 +19,13 @@ export const LoginAPI = async (email, password) => {
         const token = data.token;
         const decodedToken = jwtDecode(token);
         return decodedToken;
-    } catch (error) {
+    }
+    catch (error) {
         console.error(error);
     }
-};
-
+}
 export const RegisterAPI = async (fullName, email, password, phoneNumber, address, profession, imageUrl) => {
-    const API_URL_REGISTER = 'https://a4b3-187-190-138-154.ngrok-free.app/api/User/register';
+    const API_URL_REGISTER = 'https://36a5-187-190-138-154.ngrok-free.app/api/User/register';
     try {
         const response = await fetch(API_URL_REGISTER, {
             method: 'POST',
@@ -37,4 +38,9 @@ export const RegisterAPI = async (fullName, email, password, phoneNumber, addres
     } catch (error) {
         console.error(error);
     }
+};
+
+export const validateEmail = (email) => {
+    const re = /\S+@\S+\.\S+/;
+    return re.test(email);
 };

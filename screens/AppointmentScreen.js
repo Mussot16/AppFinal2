@@ -1,3 +1,4 @@
+// AppointmentScreen.js
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -11,12 +12,9 @@ const AppointmentScreen = () => {
     { id: 1, name: 'Julia Alvarez Parra', time: '14:00 - 15:00' },
     { id: 2, name: 'Pedro Pérez', time: '15:30 - 16:30' },
     { id: 3, name: 'Pedro Pérez', time: '16:30 - 17:30' },
-    { id: 3, name: 'Pedro Pérez', time: '16:30 - 17:30' },
-    { id: 3, name: 'Pedro Pérez', time: '16:30 - 17:30' },
-    { id: 3, name: 'Pedro Pérez', time: '16:30 - 17:30' },
-    { id: 3, name: 'Pedro Pérez', time: '16:30 - 17:30' },
-    { id: 3, name: 'Pedro Pérez', time: '16:30 - 17:30' },
-    { id: 3, name: 'Pedro Pérez', time: '16:30 - 17:30' },
+    { id: 4, name: 'Pedro Pérez', time: '17:00 - 18:00' },
+    { id: 5, name: 'Pedro Pérez', time: '18:30 - 19:30' },
+    { id: 6, name: 'Pedro Pérez', time: '20:00 - 21:00' },
     // Añade más citas según sea necesario
   ];
 
@@ -28,6 +26,12 @@ const AppointmentScreen = () => {
   };
   const handleRequest = () => {
     navigation.navigate('Requests');
+  };
+  const handleSettings = () => {
+    navigation.navigate('setting');
+  };
+  const handleMetrics = () => {
+    navigation.navigate('linechart');
   };
   const handleModify = (appointment) => {
     // Lógica para modificar la cita
@@ -70,7 +74,7 @@ const AppointmentScreen = () => {
         </View>
       )}
       <View style={styles.bottomBar}>
-        <TouchableOpacity style={styles.iconButton}>
+        <TouchableOpacity style={styles.iconButton} onPress={handleCalendar}>
           <AntDesign name="calendar" size={32} color="#fff" />
           <Text style={styles.iconText}>Citas Activas</Text>
         </TouchableOpacity>
@@ -82,11 +86,11 @@ const AppointmentScreen = () => {
           <AntDesign name="calendar" size={32} color="#fff" />
           <Text style={styles.iconText}>Calendario</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.iconButton}>
+        <TouchableOpacity style={styles.iconButton} onPress={handleMetrics}>
           <AntDesign name="linechart" size={32} color="#fff" />
           <Text style={styles.iconText}>Métricas</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.iconButton}>
+        <TouchableOpacity style={styles.iconButton} onPress={handleSettings}>
           <AntDesign name="setting" size={32} color="#fff" />
           <Text style={styles.iconText}>Ajustes</Text>
         </TouchableOpacity>
