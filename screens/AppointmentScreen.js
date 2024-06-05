@@ -1,47 +1,83 @@
-// AppointmentScreen.js
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import React, { useState, useContext } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Modal, TextInput } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { AntDesign } from '@expo/vector-icons';
+import { AppointmentsContext } from '../context/AppointmentsContext';
 
 const AppointmentScreen = () => {
   const navigation = useNavigation();
+  const { appointments, deleteAppointment, modifyAppointment } = useContext(AppointmentsContext);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
-
-  const appointments = [
-    { id: 1, name: 'Julia Alvarez Parra', time: '14:00 - 15:00' },
-    { id: 2, name: 'Pedro Pérez', time: '15:30 - 16:30' },
-    { id: 3, name: 'Pedro Pérez', time: '16:30 - 17:30' },
-    { id: 4, name: 'Pedro Pérez', time: '17:00 - 18:00' },
-    { id: 5, name: 'Pedro Pérez', time: '18:30 - 19:30' },
-    { id: 6, name: 'Pedro Pérez', time: '20:00 - 21:00' },
-    // Añade más citas según sea necesario
-  ];
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [showModifyModal, setShowModifyModal] = useState(false);
+  const [appointmentToModify, setAppointmentToModify] = useState(null);
+  const [newTime, setNewTime] = useState('');
 
   const handleCancel = () => {
     navigation.goBack();
   };
+
   const handleCalendar = () => {
-    navigation.navigate('Calendar');
+    navigation.navigate('CalendarScreen');
   };
+
   const handleRequest = () => {
     navigation.navigate('Requests');
   };
+
   const handleSettings = () => {
-    navigation.navigate('setting');
+    navigation.navigate('Settings');
   };
+
   const handleMetrics = () => {
-    navigation.navigate('linechart');
+    navigation.navigate('MetricsScreen');
   };
+
   const handleModify = (appointment) => {
-    // Lógica para modificar la cita
-    setSelectedAppointment(null); // Cerrar el detalle después de la modificación
+    setAppointmentToModify(appointment);
+    setNewTime(appointment.time);
+    setShowModifyModal(true);
   };
+
   const handleAppointmentPress = (appointment) => {
     setSelectedAppointment(appointment);
   };
+
+  const handleAppointment = () => {
+    navigation.navigate('AppointmentScreen');
+  };
+
   const handleCloseDetail = () => {
     setSelectedAppointment(null);
+  };
+
+  const handleDeleteRequest = (appointment) => {
+    setShowConfirmation(true);
+    setAppointmentToModify(appointment);
+  };
+
+  const confirmDelete = () => {
+    deleteAppointment(appointmentToModify.id);
+    setShowConfirmation(false);
+    setSelectedAppointment(null);
+    setAppointmentToModify(null);
+  };
+
+  const cancelDelete = () => {
+    setShowConfirmation(false);
+    setAppointmentToModify(null);
+  };
+
+  const confirmModify = () => {
+    modifyAppointment(appointmentToModify.id, { time: newTime });
+    setShowModifyModal(false);
+    setSelectedAppointment(null);
+    setAppointmentToModify(null);
+  };
+
+  const cancelModify = () => {
+    setShowModifyModal(false);
+    setAppointmentToModify(null);
   };
 
   return (
@@ -67,14 +103,56 @@ const AppointmentScreen = () => {
         <View style={styles.modalOverlay}>
           <AppointmentDetail
             appointment={selectedAppointment}
-            onCancel={() => handleCancel(selectedAppointment.id)}
+            onDeleteRequest={handleDeleteRequest}
             onModify={handleModify}
             onClose={handleCloseDetail}
           />
         </View>
       )}
+      <Modal
+        visible={showConfirmation}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={cancelDelete}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.confirmationContainer}>
+            <Text style={styles.confirmationText}>¿Estás seguro de que deseas eliminar esta cita?</Text>
+            <TouchableOpacity style={styles.confirmButton} onPress={confirmDelete}>
+              <Text style={styles.buttonText}>Eliminar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.cancelButton} onPress={cancelDelete}>
+              <Text style={styles.buttonText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      <Modal
+        visible={showModifyModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={cancelModify}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modifyContainer}>
+            <Text style={styles.modifyText}>Modificar Hora de la Cita</Text>
+            <TextInput
+              style={styles.input}
+              value={newTime}
+              onChangeText={setNewTime}
+              placeholder="Nueva Hora (ej. 14:00 - 15:00)"
+            />
+            <TouchableOpacity style={styles.confirmButton} onPress={confirmModify}>
+              <Text style={styles.buttonText}>Modificar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.cancelButton} onPress={cancelModify}>
+              <Text style={styles.buttonText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
       <View style={styles.bottomBar}>
-        <TouchableOpacity style={styles.iconButton} onPress={handleCalendar}>
+        <TouchableOpacity style={styles.iconButton} onPress={handleAppointment}>
           <AntDesign name="calendar" size={32} color="#fff" />
           <Text style={styles.iconText}>Citas Activas</Text>
         </TouchableOpacity>
@@ -99,7 +177,7 @@ const AppointmentScreen = () => {
   );
 };
 
-const AppointmentDetail = ({ appointment, onCancel, onModify, onClose }) => {
+const AppointmentDetail = ({ appointment, onDeleteRequest, onModify, onClose }) => {
   return (
     <View style={styles.modalContainer}>
       <TouchableOpacity style={styles.closeButton} onPress={onClose}>
@@ -108,7 +186,7 @@ const AppointmentDetail = ({ appointment, onCancel, onModify, onClose }) => {
       <Text style={styles.modalText}>Detalles de la cita:</Text>
       <Text style={styles.modalText}>Nombre: {appointment.name}</Text>
       <Text style={styles.modalText}>Hora: {appointment.time}</Text>
-      <TouchableOpacity style={styles.modalButton} onPress={onCancel}>
+      <TouchableOpacity style={styles.modalButton} onPress={() => onDeleteRequest(appointment)}>
         <Text style={styles.buttonText}>Eliminar Cita</Text>
       </TouchableOpacity>
       <TouchableOpacity style={styles.modalButton} onPress={() => onModify(appointment)}>
@@ -211,6 +289,57 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 10,
     marginTop: 5,
+  },
+  confirmationContainer: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+    width: '80%',
+    alignItems: 'center',
+    elevation: 5,
+  },
+  confirmationText: {
+    fontSize: 16,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  confirmButton: {
+    backgroundColor: '#1B4965',
+    borderRadius: 5,
+    padding: 10,
+    alignItems: 'center',
+    marginTop: 10,
+    width: '80%',
+  },
+  cancelButton: {
+    backgroundColor: '#ccc',
+    borderRadius: 5,
+    padding: 10,
+    alignItems: 'center',
+    marginTop: 10,
+    width: '80%',
+  },
+  modifyContainer: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+    width: '80%',
+    alignItems: 'center',
+    elevation: 5,
+  },
+  modifyText: {
+    fontSize: 16,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  input: {
+    height: 40,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 5,
+    padding: 10,
+    width: '100%',
+    marginBottom: 20,
   },
 });
 

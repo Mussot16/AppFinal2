@@ -1,73 +1,59 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import React, { useState, useContext } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Modal } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { AntDesign } from '@expo/vector-icons';
-
+import { AppointmentsContext } from '../context/AppointmentsContext';
 const Requests = () => {
   const navigation = useNavigation();
+  const { acceptRequest, deleteRequest, requests } = useContext(AppointmentsContext);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [confirmation, setConfirmation] = useState(null);
 
-  const appointments = [
-    { id: 1, name: 'Ismael Duran Lopez', time: '12:00 - 14:00' },
-    { id: 2, name: 'Ivan Ortiz Dominguez', time: '15:30 - 16:30' },
-    { id: 1, name: 'Ismael Duran Lopez', time: '12:00 - 14:00' },
-    { id: 2, name: 'Ivan Ortiz Dominguez', time: '15:30 - 16:30' },
-    { id: 1, name: 'Ismael Duran Lopez', time: '12:00 - 14:00' },
-    { id: 2, name: 'Ivan Ortiz Dominguez', time: '15:30 - 16:30' },
-    { id: 1, name: 'Ismael Duran Lopez', time: '12:00 - 14:00' },
-    { id: 2, name: 'Ivan Ortiz Dominguez', time: '15:30 - 16:30' },
-    { id: 1, name: 'Ismael Duran Lopez', time: '12:00 - 14:00' },
-    { id: 2, name: 'Ivan Ortiz Dominguez', time: '15:30 - 16:30' },
-
-    // Añade más citas según sea necesario
-  ];
-
-  const handleAppointment = () => {
-    navigation.navigate('AppointmentScreen'); 
-  };
-  const handleCancel = () => {
-    navigation.goBack(); 
-  };
-  const handleCalendar = () => {
-    navigation.navigate('Calendar'); 
-  };
-
   const handleAppointmentPress = (appointment) => {
     setSelectedAppointment(appointment);
+    setConfirmation('accept');
   };
 
-  const handleAccept = (id) => {
-    setConfirmation({ id, action: 'accept' });
+  const handleDeleteRequest = (appointment) => {
+    setSelectedAppointment(appointment);
+    setConfirmation('delete');
   };
 
-  const handleReject = (id) => {
-    setConfirmation({ id, action: 'reject' });
-  };
-
-  const handleConfirm = () => {
-    // lógica para confirmar la acción
-    if (confirmation.action === 'accept') {
-      // lógica para aceptar la cita
-    } else {
-      // lógica para rechazar la cita
+  const confirmAction = () => {
+    if (confirmation === 'accept') {
+      acceptRequest(selectedAppointment);
+    } else if (confirmation === 'delete') {
+      deleteRequest(selectedAppointment.id);
     }
-    setSelectedAppointment(null);
     setConfirmation(null);
-  };
-
-  const handleCloseDetail = () => {
     setSelectedAppointment(null);
   };
 
-  const handleCloseConfirmation = () => {
+  const cancelAction = () => {
     setConfirmation(null);
+    setSelectedAppointment(null);
+  };
+
+  const handleCancel = () => {
+    navigation.goBack();
+  };
+
+  const handleCalendar = () => {
+    navigation.navigate('CalendarScreen');
+  };
+
+  const handleSettings = () => {
+    navigation.navigate('Settings');
+  };
+
+  const handleMetrics = () => {
+    navigation.navigate('MetricsScreen');
   };
 
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {appointments.map(appointment => (
+        {requests.map(appointment => (
           <TouchableOpacity
             key={appointment.id}
             style={styles.appointmentContainer}
@@ -78,85 +64,55 @@ const Requests = () => {
               <View style={styles.appointmentInfo}>
                 <Text style={styles.name}>{appointment.name}</Text>
                 <Text style={styles.time}>{appointment.time}</Text>
+                <Text style={styles.date}>{appointment.date}</Text>
               </View>
+              <TouchableOpacity onPress={() => handleDeleteRequest(appointment)}>
+                <AntDesign name="delete" size={24} color="red" />
+              </TouchableOpacity>
             </View>
           </TouchableOpacity>
         ))}
       </ScrollView>
-      {selectedAppointment && !confirmation && (
-        <View style={styles.modalOverlay}>
-          <AppointmentDetail
-            appointment={selectedAppointment}
-            onAccept={() => handleAccept(selectedAppointment.id)}
-            onReject={() => handleReject(selectedAppointment.id)}
-            onClose={handleCloseDetail}
-          />
-        </View>
-      )}
       {confirmation && (
-        <View style={styles.modalOverlay}>
-          <ConfirmationDetail
-            action={confirmation.action}
-            onConfirm={handleConfirm}
-            onCancel={handleCloseConfirmation}
-          />
-        </View>
+        <Modal
+          visible={true}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={cancelAction}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContainer}>
+              <Text style={styles.modalText}>
+                {confirmation === 'accept' ? '¿Aceptar esta cita?' : '¿Eliminar esta solicitud?'}
+              </Text>
+              <TouchableOpacity style={styles.confirmButton} onPress={confirmAction}>
+                <Text style={styles.buttonText}>Confirmar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.cancelButton} onPress={cancelAction}>
+                <Text style={styles.buttonText}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       )}
       <View style={styles.bottomBar}>
-        <TouchableOpacity style={styles.iconButton} onPress={handleAppointment}>
-          <AntDesign name="calendar" size={32} color="#fff" />
-          <Text style={styles.iconText}>Citas Activas</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.iconButton}>
-          <AntDesign name="form" size={32} color="#fff" />
-          <Text style={styles.iconText}>Solicitud de Citas</Text>
+        <TouchableOpacity style={styles.iconButton} onPress={handleCancel}>
+          <AntDesign name="closecircle" size={32} color="#fff" />
+          <Text style={styles.iconText}>Cancelar</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.iconButton} onPress={handleCalendar}>
           <AntDesign name="calendar" size={32} color="#fff" />
           <Text style={styles.iconText}>Calendario</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.iconButton}>
-          <AntDesign name="linechart" size={32} color="#fff" />
-          <Text style={styles.iconText}>Métricas</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.iconButton}>
+        <TouchableOpacity style={styles.iconButton} onPress={handleSettings}>
           <AntDesign name="setting" size={32} color="#fff" />
           <Text style={styles.iconText}>Ajustes</Text>
         </TouchableOpacity>
+        <TouchableOpacity style={styles.iconButton} onPress={handleMetrics}>
+          <AntDesign name="linechart" size={32} color="#fff" />
+          <Text style={styles.iconText}>Métricas</Text>
+        </TouchableOpacity>
       </View>
-    </View>
-  );
-};
-
-const AppointmentDetail = ({ appointment, onAccept, onReject, onClose }) => {
-  return (
-    <View style={styles.modalContainer}>
-      <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-        <AntDesign name="close" size={24} color="#fff" />
-      </TouchableOpacity>
-      <Text style={styles.modalText}>Detalles de la cita:</Text>
-      <Text style={styles.modalText}>Nombre: {appointment.name}</Text>
-      <Text style={styles.modalText}>Hora: {appointment.time}</Text>
-      <TouchableOpacity style={styles.modalButton} onPress={onAccept}>
-        <Text style={styles.buttonText}>Aceptar Cita</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.modalButton} onPress={onReject}>
-        <Text style={styles.buttonText}>Rechazar Cita</Text>
-      </TouchableOpacity>
-    </View>
-  );
-};
-
-const ConfirmationDetail = ({ action, onConfirm, onCancel }) => {
-  return (
-    <View style={styles.modalContainer}>
-      <Text style={styles.modalText}>¿Estás seguro que quieres {action === 'accept' ? 'aceptar' : 'rechazar'} esta cita?</Text>
-      <TouchableOpacity style={styles.modalButton} onPress={onConfirm}>
-        <Text style={styles.buttonText}>Sí</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.modalButton} onPress={onCancel}>
-        <Text style={styles.buttonText}>No</Text>
-      </TouchableOpacity>
     </View>
   );
 };
@@ -175,11 +131,11 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 10,
     elevation: 2,
+    padding: 10,
   },
   appointmentContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 10,
   },
   avatar: {
     width: 50,
@@ -200,20 +156,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#1B4965',
   },
-  bottomBar: {
-    flexDirection: 'row',
-    backgroundColor: '#1B4965',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-  },
-  iconButton: {
-    alignItems: 'center',
-  },
-  iconText: {
-    color: '#fff',
-    fontSize: 10,
-    marginTop: 5,
+  date: {
+    fontSize: 12,
+    color: '#1B4965',
   },
   modalOverlay: {
     position: 'absolute',
@@ -230,30 +175,48 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 10,
     width: '80%',
+    alignItems: 'center',
     elevation: 5,
-  },
-  closeButton: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    backgroundColor: '#1B4965',
-    borderRadius: 15,
-    padding: 5,
   },
   modalText: {
     fontSize: 16,
-    marginBottom: 10,
+    marginBottom: 20,
+    textAlign: 'center',
   },
-  modalButton: {
+  confirmButton: {
     backgroundColor: '#1B4965',
     borderRadius: 5,
     padding: 10,
     alignItems: 'center',
     marginTop: 10,
+    width: '80%',
+  },
+  cancelButton: {
+    backgroundColor: '#ccc',
+    borderRadius: 5,
+    padding: 10,
+    alignItems: 'center',
+    marginTop: 10,
+    width: '80%',
   },
   buttonText: {
     color: '#fff',
     fontSize: 16,
+  },
+  bottomBar: {
+    flexDirection: 'row',
+    backgroundColor: '#1B4965',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  iconButton: {
+    alignItems: 'center',
+  },
+  iconText: {
+    color: '#fff',
+    fontSize: 10,
+    marginTop: 5,
   },
 });
 

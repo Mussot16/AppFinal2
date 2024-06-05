@@ -1,48 +1,49 @@
-// CalendarScreen.js
-import React, { useState } from "react";
-import { StyleSheet, View, Text } from 'react-native';
+import React, { useState, useEffect, useContext } from "react";
+import { StyleSheet, View, Text, Modal, TouchableOpacity, Image } from 'react-native';
 import { Agenda } from 'react-native-calendars';
 import { NativeBaseProvider } from "native-base";
 import moment from "moment-timezone";
+import { AppointmentsContext } from '../context/AppointmentsContext';
 
 const CalendarScreen = () => {
+  const { appointments } = useContext(AppointmentsContext);
   const [items, setItems] = useState({});
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
+
+  useEffect(() => {
+    loadItems();
+  }, [appointments]);
 
   const today = moment().tz("America/Tijuana");
   const currentDate = today.format("YYYY-MM-DD");
 
-  const loadItemsForMonth = (month) => {
-    setTimeout(() => {
-      const newItems = {};
-      for (let i = -15; i < 85; i++) {
-        const time = today.clone().add(i, 'days').format('YYYY-MM-DD');
-        if (!newItems[time]) {
-          newItems[time] = [];
-          const numItems = Math.floor(Math.random() * 3 + 1);
-          for (let j = 0; j < numItems; j++) {
-            newItems[time].push({
-              name: 'Cita ' + (j + 1),
-              time: '10:00 AM',
-              date: time,
-              status: 'Pendiente',
-              img: 'https://via.placeholder.com/150',
-              id: i.toString() + '-' + j.toString()
-            });
-          }
-        }
+  const loadItems = () => {
+    const newItems = {};
+    appointments.forEach(appointment => {
+      const date = appointment.date;
+      if (!newItems[date]) {
+        newItems[date] = [];
       }
-      setItems(newItems);
-    }, 1000);
+      newItems[date].push(appointment);
+    });
+    setItems(newItems);
   };
 
   const renderItem = (item) => {
     return (
-      <View style={styles.cardContainer}>
+      <TouchableOpacity
+        style={styles.cardContainer}
+        onPress={() => {
+          setSelectedItem(item);
+          setModalVisible(true);
+        }}
+      >
         <Text>{item.name}</Text>
         <Text>{item.time}</Text>
         <Text>{item.date}</Text>
         <Text>{item.status}</Text>
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -76,13 +77,39 @@ const CalendarScreen = () => {
           <Agenda
             selected={currentDate}
             items={items}
-            loadItemsForMonth={loadItemsForMonth}
+            loadItemsForMonth={loadItems}
             renderItem={renderItem}
             renderEmptyDate={renderEmptyDate}
             minDate="2024-04-01"
             theme={calendarTheme}
           />
         </View>
+        {selectedItem && (
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={modalVisible}
+            onRequestClose={() => {
+              setModalVisible(!modalVisible);
+            }}
+          >
+            <View style={styles.modalView}>
+              <Text style={styles.modalText}>Nombre: {selectedItem.name}</Text>
+              <Text style={styles.modalText}>Hora: {selectedItem.time}</Text>
+              <Text style={styles.modalText}>Fecha: {selectedItem.date}</Text>
+              <Text style={styles.modalText}>Estado: {selectedItem.status}</Text>
+              <Image style={styles.image} source={{ uri: selectedItem.img }} />
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => {
+                  setModalVisible(!modalVisible);
+                }}
+              >
+                <Text style={styles.textStyle}>Cerrar</Text>
+              </TouchableOpacity>
+            </View>
+          </Modal>
+        )}
       </View>
     </NativeBaseProvider>
   );
@@ -121,6 +148,43 @@ const styles = StyleSheet.create({
   emptyDateText: {
     textAlign: 'center',
     color: '#8c8c8c',
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 35,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5
+  },
+  closeButton: {
+    backgroundColor: "#2196F3",
+    borderRadius: 10,
+    padding: 10,
+    elevation: 2,
+    marginTop: 20,
+  },
+  textStyle: {
+    color: "white",
+    fontWeight: "bold",
+    textAlign: "center"
+  },
+  modalText: {
+    marginBottom: 15,
+    textAlign: "center"
+  },
+  image: {
+    width: 150,
+    height: 150,
+    marginBottom: 15,
+    borderRadius: 10
   }
 });
 
